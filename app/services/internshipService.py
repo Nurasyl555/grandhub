@@ -1,18 +1,87 @@
+from typing import Optional, Tuple, List
+from datetime import date, datetime
+
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemes import internship
-from sqlmodel import select, desc
+from sqlmodel import select, desc, asc
+from sqlalchemy import func, or_, and_
 from app.models.internship import Internship
-from datetime import datetime
+
+
+def _parse_date(value: Optional[str | date | datetime]) -> Optional[datetime]:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None)
+    if isinstance(value, date):
+        return datetime(value.year, value.month, value.day)
+    return datetime.strptime(str(value), "%Y-%m-%d")
+
+
+_SORT_MAP = {
+    "created_at": Internship.created_at,
+    "published_at": Internship.published_at,
+    "deadline": Internship.deadline,
+}
 
 
 class InternshipService:
-    async def get_all_internships(self, session: AsyncSession):
-        statement = select(Internship).order_by(desc(Internship.created_at))
+    async def get_all_internships(
+        self,
+        session: AsyncSession,
+        page: int = 1,
+        page_size: int = 20,
+        q: Optional[str] = None,
+        provider: Optional[str] = None,
+        country: Optional[str] = None,
+        paid: Optional[bool] = None,
+        deadline_from: Optional[str] = None,
+        deadline_to: Optional[str] = None,
+        sort_by: str = "created_at",
+        order: str = "desc",
+    ) -> Tuple[List[Internship], int]:
+        stmt = select(Internship)
 
-        result = await session.exec(statement)
-        
-        return result.all()
-    
+        if q:
+            like = f"%{q}%"
+            stmt = stmt.where(
+                or_(
+                    Internship.title.ilike(like),
+                    Internship.description.ilike(like),
+                )
+            )
+
+        if provider:
+            stmt = stmt.where(Internship.provider.ilike(f"%{provider}%"))
+        if country:
+            stmt = stmt.where(Internship.country.ilike(f"%{country}%"))
+        if paid is not None:
+            stmt = stmt.where(Internship.paid == paid)
+
+        df = _parse_date(deadline_from)
+        dt = _parse_date(deadline_to)
+        if df and dt:
+            stmt = stmt.where(and_(Internship.deadline >= df, Internship.deadline <= dt))
+        elif df:
+            stmt = stmt.where(Internship.deadline >= df)
+        elif dt:
+            stmt = stmt.where(Internship.deadline <= dt)
+
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = (await session.exec(count_stmt)).one()
+
+        sort_col = _SORT_MAP.get(sort_by, Internship.created_at)
+        order_by = desc(sort_col) if order.lower() == "desc" else asc(sort_col)
+        stmt = stmt.order_by(order_by)
+
+        offset = (page - 1) * page_size
+        stmt = stmt.offset(offset).limit(page_size)
+
+        result = await session.exec(stmt)
+        items = result.all()
+        return items, total
+
+
     async def get_internship(self, internship_id:int, session: AsyncSession):
         statement = select(Internship).where(Internship.id == internship_id)
 

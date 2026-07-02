@@ -1,10 +1,19 @@
+import sentry_sdk
 from fastapi import FastAPI
 from app.api.routes.routes import router as base_router
 from contextlib import asynccontextmanager
+from app.core.config import settings
 from app.db.main import init_db
 from app.auth.routes import auth_router
 from app.middlewares.middleware import register_middleware
 from demo_front.router import router as demo_front_router
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        traces_sample_rate=0.1,
+    )
 
 
 @asynccontextmanager

@@ -1,10 +1,10 @@
-from fastapi import APIRouter, status, Depends, Response
+from fastapi import APIRouter, status, Depends, Response, Query
 from fastapi.exceptions import HTTPException
 from app.schemes import scholarship
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.services.scholarshipService import ScholarshipService
 from app.models.scholarship import Scholarship
-from typing import List
+from typing import List, Optional, Literal
 from app.db.main import get_session
 from app.auth.dependencies import RoleChecker
 
@@ -14,9 +14,38 @@ checker_admin = Depends(RoleChecker(['admin']))
 
 
 @router.get("/", response_model=List[scholarship.ScholarshipRead], status_code=status.HTTP_200_OK)
-async def get_all_scholarships(session: AsyncSession = Depends(get_session)):
-    scholarships = await scholarship_service.get_all_scholarships(session)
-    return scholarships
+async def get_all_scholarships(
+    session: AsyncSession = Depends(get_session),
+    page: int = Query(1, ge=1, description="Номер страницы, начиная с 1"),
+    page_size: int = Query(20, ge=1, le=100, description="Размер страницы"),
+    q: Optional[str] = Query(None, description="Поиск по title/description"),
+    provider: Optional[str] = Query(None),
+    country: Optional[str] = Query(None),
+    level: Optional[str] = Query(None, description="bachelor, master, phd"),
+    deadline_from: Optional[str] = Query(None, description="YYYY-MM-DD"),
+    deadline_to: Optional[str] = Query(None, description="YYYY-MM-DD"),
+    sort_by: Literal["created_at", "published_at", "deadline"] = Query("created_at"),
+    order: Literal["asc", "desc"] = Query("desc"),
+    response: Response = None,
+):
+    items, total = await scholarship_service.get_all_scholarships(
+        session=session,
+        page=page,
+        page_size=page_size,
+        q=q,
+        provider=provider,
+        country=country,
+        level=level,
+        deadline_from=deadline_from,
+        deadline_to=deadline_to,
+        sort_by=sort_by,
+        order=order,
+    )
+
+    response.headers["X-Total-Count"] = str(total)
+    response.headers["X-Page"] = str(page)
+    response.headers["X-Page-Size"] = str(page_size)
+    return items
 
 
 @router.post("/", response_model=scholarship.ScholarshipRead, status_code=status.HTTP_201_CREATED, dependencies=[checker_admin])
