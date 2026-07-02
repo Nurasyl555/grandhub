@@ -50,4 +50,4 @@ jobs:
         run: ruff check app/ tests/
 
       - name: Run tests
-        run: pytest -v --tb=short --asyncio-mode=strict
+        run: pytest -v --tb=short 
