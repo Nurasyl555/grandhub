@@ -68,7 +68,15 @@ async def create_user_account(user_data: UserCreateModel, bg_tasks: BackgroundTa
 
     return {
         "message":"Account Created! Check email to verify your account",
-        "user": new_user
+        "user": {
+            "uid": str(new_user.uid),
+            "email": new_user.email,
+            "username": new_user.username,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name,
+            "is_verified": new_user.is_verified,
+        }
+
     }
 
 @auth_router.get('/verify/{token}')
@@ -134,8 +142,12 @@ async def login_users(login_data: UserLoginModel, session: AsyncSession = Depend
                     "refresh_token": refresh_token,
                     "user": {
                         "email": user.email,
-                        "uid": str(user.uid)
+                        "uid": str(user.uid),
+                        "username": user.username,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
                     }
+
                 }
             )
     
@@ -163,7 +175,14 @@ async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer(
 
 @auth_router.get('/my_account')
 async def get_account_credentials(user = Depends(get_current_user), _:bool= Depends(role_checker)):
-    return user
+    return {
+        "uid": str(user.uid),
+        "email": user.email,
+        "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "is_verified": user.is_verified,
+    }
 
 
 @auth_router.get('/logout')

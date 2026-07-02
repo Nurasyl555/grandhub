@@ -46,10 +46,10 @@ Create a `.env` file in the project root with the following values:
 
 ```env
 DATABASE_URL=sqlite+aiosqlite:///./dev.db
-SECRET_KEY=localdev
-secret_key=localdev
+SECRET_KEY=your-secret-key
+secret_key=your-secret
 
-JWT_SECRET=localdev
+JWT_SECRET=your-jwt-secret
 JWT_ALGORITHM=HS256
 
 CELERY_BROKER_URL=redis://localhost:6379/0
@@ -92,3 +92,89 @@ Tests use an isolated in-memory SQLite database — they never touch `dev.db`.
 pip install pytest pytest-asyncio
 pytest -v
 ```
+
+## API Reference
+
+Base URL: `http://127.0.0.1:8000/api/v1`
+
+### Health
+
+| Method | Endpoint   | Description                |
+|--------|------------|----------------------------|
+| GET    | `/health`  | Database and Redis health check |
+
+### Auth
+
+| Method | Endpoint                                    | Description                |
+|--------|---------------------------------------------|----------------------------|
+| POST   | `/auth/signup`                              | Register a new user        |
+| POST   | `/auth/login`                               | Login (returns JWT tokens) |
+| GET    | `/auth/refresh_token`                       | Refresh access token       |
+| GET    | `/auth/logout`                              | Logout (revoke token)      |
+| GET    | `/auth/verify/{token}`                      | Verify email address       |
+| POST   | `/auth/password-reset-request`              | Request password reset     |
+| POST   | `/auth/password-reset-confirm/{token}`      | Confirm password reset     |
+| GET    | `/auth/my_account`                          | Get current user info      |
+
+### Grants
+
+| Method | Endpoint           | Description                                |
+|--------|--------------------|--------------------------------------------|
+| GET    | `/grants/`         | List grants (paginated, searchable)        |
+| POST   | `/grants/`         | Create a grant (admin)                     |
+| GET    | `/grants/{id}`     | Get grant details                          |
+| PATCH  | `/grants/{id}`     | Update a grant (admin)                     |
+| DELETE | `/grants/{id}`     | Delete a grant (admin)                     |
+
+### Scholarships
+
+| Method | Endpoint                | Description                                    |
+|--------|-------------------------|------------------------------------------------|
+| GET    | `/scholarships/`        | List scholarships (paginated, searchable)      |
+| POST   | `/scholarships/`        | Create a scholarship (admin)                   |
+| GET    | `/scholarships/{id}`    | Get scholarship details                        |
+| PATCH  | `/scholarships/{id}`    | Update a scholarship (admin)                   |
+| DELETE | `/scholarships/{id}`    | Delete a scholarship (admin)                   |
+
+### Internships
+
+| Method | Endpoint               | Description                                   |
+|--------|------------------------|-----------------------------------------------|
+| GET    | `/internships/`        | List internships (paginated, searchable)      |
+| POST   | `/internships/`        | Create an internship (admin)                  |
+| GET    | `/internships/{id}`    | Get internship details                        |
+| PATCH  | `/internships/{id}`    | Update an internship (admin)                  |
+| DELETE | `/internships/{id}`    | Delete an internship (admin)                  |
+
+### Recommendations
+
+| Method | Endpoint                    | Description                         |
+|--------|-----------------------------|-------------------------------------|
+| GET    | `/recommendations/`         | Get personalized recommendations    |
+| POST   | `/recommendations/recompute`| Trigger recomputation (admin)       |
+| DELETE | `/recommendations/{id}`     | Delete a recommendation (admin)     |
+
+### Query Parameters for List Endpoints
+
+| Parameter      | Type   | Description                                    |
+|----------------|--------|------------------------------------------------|
+| `page`         | int    | Page number (default: 1)                       |
+| `page_size`    | int    | Items per page (default: 20, max: 100)         |
+| `q`            | str    | Search by title / description                  |
+| `provider`     | str    | Filter by provider                             |
+| `country`      | str    | Filter by country                              |
+| `deadline_from`| str    | Deadline after (YYYY-MM-DD)                    |
+| `deadline_to`  | str    | Deadline before (YYYY-MM-DD)                   |
+| `sort_by`      | str    | Sort field: `created_at`, `published_at`, `deadline` |
+| `order`        | str    | Sort direction: `asc` or `desc`                |
+
+**Additional filters:**
+- Scholarships: `level` (bachelor, master, phd)
+- Internships: `paid` (true/false)
+
+### Pagination Headers
+
+List endpoints return pagination info in response headers:
+- `X-Total-Count` — total number of items
+- `X-Page` — current page number
+- `X-Page-Size` — current page size
