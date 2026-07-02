@@ -30,17 +30,29 @@ jobs:
           pip install -r requirements.txt
           pip install aiosqlite asgiref ruff pytest pytest-asyncio
 
+      - name: Create .env file for tests
+        run: |
+          cat > .env << EOF
+          DATABASE_URL=sqlite+aiosqlite:///./test.db
+          SECRET_KEY=test-secret
+          secret_key=test-secret
+          JWT_SECRET=test-jwt-secret
+          JWT_ALGORITHM=HS256
+          CELERY_BROKER_URL=redis://localhost:6379/0
+          CELERY_RESULT_BACKEND=redis://localhost:6379/1
+          DOMAIN=localhost:8000
+          UPSTASH_REDIS_REST_URL=http://localhost
+          UPSTASH_REDIS_REST_TOKEN=dummy
+          MAIL_USERNAME=test@test.com
+          MAIL_PASSWORD=dummy
+          MAIL_FROM=test@test.com
+          MAIL_FROM_NAME=Local
+          MAIL_PORT=587
+          MAIL_SERVER=smtp.gmail.com
+          EOF
 
       - name: Lint with Ruff
         run: ruff check app/ tests/
 
       - name: Run tests
-        env:
-          DATABASE_URL: sqlite+aiosqlite:///./test.db
-          SECRET_KEY: test-secret
-          JWT_SECRET: test-jwt-secret
-          JWT_ALGORITHM: HS256
-          CELERY_BROKER_URL: redis://localhost:6379/0
-          CELERY_RESULT_BACKEND: redis://localhost:6379/1
-          DOMAIN: localhost:8000
         run: pytest -v --tb=short
