@@ -14,11 +14,7 @@ from app.core.config import settings
 from app.middlewares.mail import mail, create_message
 
 # ВАЖНО: для ETL нам нужен AsyncSession напрямую, без FastAPI Depends
-# Экспортируй из app.db.main объект AsyncSessionLocal (sessionmaker)
-try:
-    from app.db.main import AsyncSessionLocal  # предпочтительно
-except Exception:
-    AsyncSessionLocal = None
+from app.db.main import AsyncSessionLocal
 
 logger = get_task_logger(__name__)
 

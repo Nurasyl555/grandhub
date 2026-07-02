@@ -22,7 +22,10 @@ templates = Jinja2Templates(directory="demo_front/templates")
 async def base(
     request: Request
 ):  
-    return templates.TemplateResponse("base.html", {"request": request})
+    return templates.TemplateResponse(
+    request=request, 
+    name="base.html"
+)
 
 # Grants
 

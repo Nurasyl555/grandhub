@@ -83,3 +83,12 @@ uvicorn app:app --reload
 ```
 
 The app will be available at **http://127.0.0.1:8000**
+
+## Running tests
+
+Tests use an isolated in-memory SQLite database — they never touch `dev.db`.
+
+```bash
+pip install pytest pytest-asyncio
+pytest -v
+```
