@@ -3,7 +3,7 @@ from fastapi.exceptions import HTTPException
 from app.schemes import internship
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.services.internshipService import InternshipService
-from app.models.internship import Internship
+#from app.models.internship import Internship
 from typing import List, Optional, Literal
 from app.db.main import get_session
 from app.auth.dependencies import RoleChecker

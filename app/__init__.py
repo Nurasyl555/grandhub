@@ -18,10 +18,10 @@ if settings.SENTRY_DSN:
 
 @asynccontextmanager
 async def life_span(app: FastAPI):
-    print(f"server is starting ... ")
+    print("server is starting ... ")
     await init_db()
     yield
-    print(f"server has been stopped")
+    print("server has been stopped")
 
 version = "v1"
 

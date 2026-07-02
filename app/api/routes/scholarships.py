@@ -3,7 +3,7 @@ from fastapi.exceptions import HTTPException
 from app.schemes import scholarship
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.services.scholarshipService import ScholarshipService
-from app.models.scholarship import Scholarship
+#from app.models.scholarship import Scholarship
 from typing import List, Optional, Literal
 from app.db.main import get_session
 from app.auth.dependencies import RoleChecker

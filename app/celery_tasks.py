@@ -1,11 +1,11 @@
 from __future__ import annotations
-import os
+#import os
 import ssl
-import asyncio
-from typing import Optional
+#import asyncio
+#from typing import Optional
 
 from celery import Celery
-from celery.schedules import crontab
+#from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from asgiref.sync import async_to_sync
@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.middlewares.mail import mail, create_message
 
 # ВАЖНО: для ETL нам нужен AsyncSession напрямую, без FastAPI Depends
-from app.db.main import AsyncSessionLocal
+#from app.db.main import AsyncSessionLocal
 
 logger = get_task_logger(__name__)
 

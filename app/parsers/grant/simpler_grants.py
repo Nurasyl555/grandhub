@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import re
 from datetime import datetime
-from typing import Iterable, List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict
 from urllib.parse import urljoin
 
 import httpx

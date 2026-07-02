@@ -14,7 +14,6 @@ from .utils import (
 from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user, RoleChecker
 from app.db.main import get_session
 from app.db.redis import add_jti_to_blocklist
-from app.middlewares.mail import mail, create_message
 from app.core.config import settings
 from datetime import timedelta, datetime
 from app.celery_tasks import send_email
