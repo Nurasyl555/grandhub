@@ -115,6 +115,7 @@ Base URL: `http://127.0.0.1:8000/api/v1`
 | POST   | `/auth/password-reset-request`              | Request password reset     |
 | POST   | `/auth/password-reset-confirm/{token}`      | Confirm password reset     |
 | GET    | `/auth/my_account`                          | Get current user info      |
+| PATCH  | `/auth/my_account`                          | Update `interests` (used by the recommendation engine) |
 
 ### Grants
 
@@ -151,8 +152,11 @@ Base URL: `http://127.0.0.1:8000/api/v1`
 | Method | Endpoint                    | Description                         |
 |--------|-----------------------------|-------------------------------------|
 | GET    | `/recommendations/`         | Get personalized recommendations    |
-| POST   | `/recommendations/recompute`| Trigger recomputation (admin)       |
+| POST   | `/recommendations/`         | Bulk-create recommendations (admin) |
+| POST   | `/recommendations/recompute`| Recompute the current user's ML recommendations (self-service, requires a verified account) |
 | DELETE | `/recommendations/{id}`     | Delete a recommendation (admin)     |
+
+**How recomputation works:** the engine is content-based — it TF-IDF-vectorizes each grant/scholarship/internship's `title + description` and the user's `interests` text (set via `PATCH /auth/my_account`), then ranks items by cosine similarity per opportunity type. Results are stored in `recommendations` with `source_model="tfidf_v1"`; each call replaces that user's previous ML recommendations. Implementation: [app/ml/recommender.py](app/ml/recommender.py), [app/services/recommendationService.py](app/services/recommendationService.py).
 
 ### Query Parameters for List Endpoints
 

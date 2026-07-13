@@ -35,6 +35,18 @@ async def create(
 ):
     return await recommendation_service.create_recommendations(recommendations, session)
 
+
+@router.post("/recompute", response_model=List[RecommendationRead], status_code=200)
+async def recompute(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Пересчитывает ML-рекомендации (TF-IDF по полю User.interests) для
+    текущего пользователя и заменяет его предыдущие ML-рекомендации.
+    """
+    return await recommendation_service.recompute_for_user(current_user, session)
+
 @router.delete("/{rec_id}", status_code=204)
 async def delete(
     rec_id: UUID,

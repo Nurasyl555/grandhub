@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from fastapi import APIRouter, Depends, status, BackgroundTasks
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
-from .schemes import UserCreateModel, UserLoginModel, EmailModel, PasswordResetRequestModel, PasswordResetConfirmModel
+from .schemes import UserCreateModel, UserLoginModel, EmailModel, PasswordResetRequestModel, PasswordResetConfirmModel, UserUpdateModel
 from .service import UserService
 from .utils import (
     create_access_token,
@@ -74,6 +74,7 @@ async def create_user_account(user_data: UserCreateModel, bg_tasks: BackgroundTa
             "first_name": new_user.first_name,
             "last_name": new_user.last_name,
             "is_verified": new_user.is_verified,
+            "interests": new_user.interests,
         }
 
     }
@@ -181,6 +182,32 @@ async def get_account_credentials(user = Depends(get_current_user), _:bool= Depe
         "first_name": user.first_name,
         "last_name": user.last_name,
         "is_verified": user.is_verified,
+        "interests": user.interests,
+    }
+
+
+@auth_router.patch('/my_account')
+async def update_account(
+    update_data: UserUpdateModel,
+    user = Depends(get_current_user),
+    _: bool = Depends(role_checker),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Обновление профиля текущего пользователя. Сейчас поддерживает только
+    `interests` — используется движком рекомендаций (TF-IDF).
+    """
+    updated_user = await user_service.update_user(
+        user, update_data.model_dump(exclude_unset=True), session
+    )
+    return {
+        "uid": str(updated_user.uid),
+        "email": updated_user.email,
+        "username": updated_user.username,
+        "first_name": updated_user.first_name,
+        "last_name": updated_user.last_name,
+        "is_verified": updated_user.is_verified,
+        "interests": updated_user.interests,
     }
 
 

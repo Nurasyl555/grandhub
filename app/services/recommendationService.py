@@ -4,11 +4,13 @@ from typing import Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
+from app.auth.models import User
 from app.models.recommendation import Recommendation
 from app.models.grant import Grant
 from app.models.internship import Internship
 from app.models.scholarship import Scholarship
 from app.schemes.recommendation import RecommendationCreate
+from app.ml.recommender import rank_items_by_interest, SOURCE_MODEL
 
 type_map = {
     "grant": Grant,
@@ -76,3 +78,48 @@ class RecommendationService:
 
         await session.delete(rec)
         await session.commit()
+
+    async def recompute_for_user(
+        self, user: User, session: AsyncSession, top_n_per_type: int = 5
+    ) -> List[Recommendation]:
+        """
+        Пересчитывает ML-рекомендации (TF-IDF по user.interests) для одного
+        пользователя. Старые рекомендации с source_model=SOURCE_MODEL
+        заменяются новыми — так recompute можно дёргать сколько угодно раз
+        без накопления дублей.
+        """
+        ranked = []
+        for item_type, model in type_map.items():
+            objs = (await session.exec(select(model))).all()
+            items = [
+                (item_type, obj.id, f"{obj.title} {obj.description}") for obj in objs
+            ]
+            # Ранжируем каждый тип отдельно, иначе более "богатый" текстом
+            # тип (например гранты) мог бы вытеснить остальные из top_n.
+            ranked.extend(
+                rank_items_by_interest(user.interests or "", items, top_n=top_n_per_type)
+            )
+
+        old_stmt = select(Recommendation).where(
+            Recommendation.user_id == user.uid,
+            Recommendation.source_model == SOURCE_MODEL,
+        )
+        old_recs = (await session.exec(old_stmt)).all()
+        for old in old_recs:
+            await session.delete(old)
+
+        new_recs = [
+            Recommendation(
+                user_id=user.uid,
+                item_id=scored.item_id,
+                item_type=scored.item_type,
+                score=scored.score,
+                source_model=SOURCE_MODEL,
+            )
+            for scored in ranked
+        ]
+        session.add_all(new_recs)
+        await session.commit()
+        for rec in new_recs:
+            await session.refresh(rec)
+        return new_recs

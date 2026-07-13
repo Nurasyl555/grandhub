@@ -96,3 +96,26 @@ async def admin_client(client: AsyncClient, admin_user: User) -> AsyncIterator[A
     app.dependency_overrides[get_current_user] = lambda: admin_user
     yield client
     app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
+def regular_user() -> User:
+    return User(
+        uid=uuid.uuid4(),
+        username="jane",
+        email="jane@test.com",
+        first_name="Jane",
+        last_name="Doe",
+        role="user",
+        is_verified=True,
+        password_hash="not-used",
+        interests="machine learning research grants",
+    )
+
+
+@pytest_asyncio.fixture
+async def user_client(client: AsyncClient, regular_user: User) -> AsyncIterator[AsyncClient]:
+    """Клиент, авторизованный как обычный (не admin) пользователь."""
+    app.dependency_overrides[get_current_user] = lambda: regular_user
+    yield client
+    app.dependency_overrides.pop(get_current_user, None)

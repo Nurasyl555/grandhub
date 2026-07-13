@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 
 
@@ -12,6 +12,11 @@ class UserCreateModel(BaseModel):
     username: str = Field(max_length=20)
     email: str = Field(max_length=30)
     password: str = Field(min_length=8)
+    interests: Optional[str] = Field(
+        default=None,
+        description="Свободный текст: чем интересуется пользователь, "
+        "используется для подбора рекомендаций",
+    )
 
 class UserModel(BaseModel):
     uid : uuid.UUID
@@ -21,6 +26,7 @@ class UserModel(BaseModel):
     last_name: str
     is_verified: bool
     password_hash: str = Field(exclude=True)
+    interests: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -31,8 +37,12 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     is_verified: bool
+    interests: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+
+class UserUpdateModel(BaseModel):
+    interests: Optional[str] = None
 
 
 class UserLoginModel(BaseModel):
