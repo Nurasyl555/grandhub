@@ -1,4 +1,5 @@
 import { Search, Bell, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 type Props = {
     search: string
@@ -6,6 +7,14 @@ type Props = {
 }
 
 export default function TopBar({ search, onSearch }: Props) {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    function scrollToFilters() {
+        if (location.pathname !== '/dashboard') { navigate('/dashboard'); return }
+        document.getElementById('dashboard-filters')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+
     return (
         <header className="bg-[#050e1a] border-b border-[rgba(255,255,255,0.06)] px-6 py-3.5 flex items-center gap-4 sticky top-0 z-10">
             <div className="flex-1 max-w-lg relative">
@@ -18,11 +27,17 @@ export default function TopBar({ search, onSearch }: Props) {
                     className="w-full pl-9 pr-4 py-2 bg-[#0c1e33] border border-[rgba(255,255,255,0.08)] rounded-lg text-[13.5px] text-white placeholder-[#3d5a72] focus:outline-none focus:ring-2 focus:ring-[rgba(0,198,167,0.2)] focus:border-[#00c6a7] transition-all"
                 />
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgba(0,198,167,0.08)] border border-[rgba(0,198,167,0.2)] rounded-lg cursor-pointer hover:bg-[rgba(0,198,167,0.14)] transition-all">
+            <button
+                onClick={() => navigate('/recommendations')}
+                className="flex items-center gap-2 px-3 py-1.5 bg-[rgba(0,198,167,0.08)] border border-[rgba(0,198,167,0.2)] rounded-lg cursor-pointer hover:bg-[rgba(0,198,167,0.14)] transition-all"
+            >
                 <Sparkles size={13} className="text-[#00c6a7]" />
                 <span className="text-[12.5px] font-medium text-[#00c6a7]">AI-подбор</span>
-            </div>
-            <button className="flex items-center gap-2 px-3 py-1.5 border border-[rgba(255,255,255,0.08)] rounded-lg text-[13px] text-[#7a9bb5] hover:bg-[#0c1e33] hover:text-white transition-all">
+            </button>
+            <button
+                onClick={scrollToFilters}
+                className="flex items-center gap-2 px-3 py-1.5 border border-[rgba(255,255,255,0.08)] rounded-lg text-[13px] text-[#7a9bb5] hover:bg-[#0c1e33] hover:text-white transition-all"
+            >
                 <SlidersHorizontal size={14} />
                 Фильтры
             </button>

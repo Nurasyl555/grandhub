@@ -4,6 +4,8 @@ import {
     Bell, Shield, LogOut, Edit3, Save, X,
     CheckCircle, Sparkles, TrendingUp, FileText, Star
 } from 'lucide-react'
+import { useAuthContext } from '../context/AuthContext'
+import { updateInterests, API_BASE } from '../services/api'
 
 const interests = [
     'IT / Tech', 'Наука', 'Образование', 'Инновации',
@@ -115,6 +117,7 @@ function NotifRow({ label, desc, defaultOn }: { label: string; desc: string; def
 
 // ── Main ──────────────────────────────────────────────────────
 export default function Profile() {
+    const { token, user } = useAuthContext()
     const [loading, setLoading]     = useState(true)
     const [visible, setVisible]     = useState(false)
     const [editing, setEditing]     = useState(false)
@@ -122,11 +125,12 @@ export default function Profile() {
     const [toastVisible, setToast]  = useState(false)
     const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile')
     const [tabVisible, setTabVisible] = useState(true)
-    const [selectedInterests, setSelectedInterests] = useState(['IT / Tech', 'Наука', 'Инновации'])
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([])
+    const [interestsSaving, setInterestsSaving] = useState(false)
 
     const [form, setForm] = useState({
-        name:       'Алуа Бексеит',
-        email:      'alua@gmail.com',
+        name:       user?.name ?? 'Пользователь',
+        email:      user?.email ?? '',
         location:   'Алматы, Казахстан',
         occupation: 'PhD студент',
         university: 'НУ, Назарбаев Университет',
@@ -135,11 +139,20 @@ export default function Profile() {
 
     const [draft, setDraft] = useState({ ...form })
 
-    // Initial load skeleton
+    // Загружаем реальные данные аккаунта (в т.ч. interests для ML-рекомендаций)
     useEffect(() => {
-        const t = setTimeout(() => { setLoading(false); setVisible(true) }, 800)
-        return () => clearTimeout(t)
-    }, [])
+        if (!token) { setLoading(false); setVisible(true); return }
+
+        fetch(`${API_BASE}/api/v1/auth/my_account`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(res => (res.ok ? res.json() : null))
+            .then(data => {
+                if (data?.interests) {
+                    setSelectedInterests(data.interests.split(',').map((s: string) => s.trim()).filter(Boolean))
+                }
+            })
+            .catch(() => {})
+            .finally(() => { setLoading(false); setVisible(true) })
+    }, [token])
 
     // Tab transition
     function switchTab(tab: typeof activeTab) {
@@ -151,8 +164,20 @@ export default function Profile() {
     const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
         setDraft(prev => ({ ...prev, [key]: e.target.value }))
 
-    const toggleInterest = (i: string) =>
-        setSelectedInterests(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])
+    // Интересы реально сохраняются на backend — их использует TF-IDF движок
+    // рекомендаций (app/ml/recommender.py) при пересчёте.
+    function toggleInterest(i: string) {
+        const next = selectedInterests.includes(i)
+            ? selectedInterests.filter(x => x !== i)
+            : [...selectedInterests, i]
+        setSelectedInterests(next)
+
+        if (!token) return
+        setInterestsSaving(true)
+        updateInterests(token, next.join(', '))
+            .catch(() => {})
+            .finally(() => setInterestsSaving(false))
+    }
 
     function handleSave() {
         setSaving(true)
@@ -385,11 +410,11 @@ export default function Profile() {
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="text-[15px] font-semibold text-white">Интересы для AI-подбора</h3>
                                     <span className="text-[11px] px-2 py-0.5 bg-[rgba(0,198,167,0.08)] border border-[rgba(0,198,167,0.2)] text-[#00c6a7] rounded-lg font-semibold">
-                                        {selectedInterests.length} выбрано
+                                        {interestsSaving ? 'Сохранение…' : `${selectedInterests.length} выбрано`}
                                     </span>
                                 </div>
                                 <p className="text-[12.5px] text-[#3d5a72] mb-4">
-                                    ИИ учитывает ваши интересы при подборе грантов
+                                    Используются TF-IDF-движком рекомендаций — сохраняются автоматически
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {interests.map(interest => {

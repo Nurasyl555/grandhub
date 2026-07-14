@@ -1,19 +1,33 @@
+import logging
+
 from upstash_redis.asyncio import Redis
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 token_blocklist = Redis(
-    url=settings.UPSTASH_REDIS_REST_URL, 
+    url=settings.UPSTASH_REDIS_REST_URL,
     token=settings.UPSTASH_REDIS_REST_TOKEN
 )
 
 JTI_EXPIRY = 3600
 
 async def add_jti_to_blocklist(jti: str) -> None:
-    await token_blocklist.set(jti, "", ex=JTI_EXPIRY)
+    try:
+        await token_blocklist.set(jti, "", ex=JTI_EXPIRY)
+    except Exception:
+        logger.exception("Redis unavailable — could not blocklist token %s", jti)
 
 async def token_in_blocklist(jti: str) -> bool:
-    value = await token_blocklist.get(jti)
-    return value is not None
+    # Redis (Upstash) недоступен — не роняем все авторизованные запросы 500-й
+    # ошибкой из-за него. Отзыв токена в этом случае просто не сработает,
+    # но остальной API продолжает работать.
+    try:
+        value = await token_blocklist.get(jti)
+        return value is not None
+    except Exception:
+        logger.exception("Redis unavailable — treating token as not blocklisted")
+        return False
 
 
 # Admin

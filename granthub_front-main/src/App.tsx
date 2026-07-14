@@ -25,9 +25,9 @@ function AppShell() {
             <div className="flex-1 flex flex-col overflow-hidden">
                 <TopBar search={search} onSearch={setSearch} />
                 <Routes>
-                    <Route path="/dashboard"       element={<Dashboard search={search} />} />
-                    <Route path="/grant/:id"        element={<GrantDetail />} />
-                    <Route path="/recommendations"  element={<Recommendations />} />
+                    <Route path="/dashboard"           element={<Dashboard search={search} />} />
+                    <Route path="/opportunity/:type/:id" element={<GrantDetail />} />
+                    <Route path="/recommendations"     element={<Recommendations />} />
                     <Route path="/profile"          element={
                         <ProtectedRoute><Profile /></ProtectedRoute>
                     } />

@@ -13,45 +13,49 @@ type NavItemType = {
     badgeColor?: string
     path?:       string
     authOnly?:   boolean
+    comingSoon?: boolean
 }
 
 const navItems: NavItemType[] = [
     { icon: LayoutDashboard, label: 'Главная',        path: '/dashboard'      },
-    { icon: Search,          label: 'Поиск грантов',  path: '/dashboard', badge: '12K+' },
+    { icon: Search,          label: 'Поиск грантов',  path: '/dashboard?type=grant' },
     { icon: Sparkles,        label: 'Рекомендации',   path: '/recommendations', authOnly: true },
-    { icon: GraduationCap,   label: 'Стипендии'                                },
-    { icon: Briefcase,       label: 'Стажировки'                               },
-    { icon: Star,            label: 'Избранное',       badge: '3'              },
+    { icon: GraduationCap,   label: 'Стипендии',      path: '/dashboard?type=scholarship' },
+    { icon: Briefcase,       label: 'Стажировки',     path: '/dashboard?type=internship'  },
+    { icon: Star,            label: 'Избранное',      comingSoon: true },
 ]
 
 const appItems: NavItemType[] = [
-    { icon: FileText,     label: 'Активные',  badge: '2', badgeColor: 'amber' },
-    { icon: ChevronRight, label: 'Поданные'                                    },
-    { icon: FileText,     label: 'Черновики'                                   },
+    { icon: FileText,     label: 'Активные',  comingSoon: true },
+    { icon: ChevronRight, label: 'Поданные',  comingSoon: true },
+    { icon: FileText,     label: 'Черновики', comingSoon: true },
 ]
 
 const bottomItems: NavItemType[] = [
-    { icon: BarChart2, label: 'Аналитика', path: '/analytics' },
-    { icon: Settings,  label: 'Профиль',   path: '/profile'   },
+    { icon: BarChart2, label: 'Аналитика', comingSoon: true },
+    { icon: Settings,  label: 'Профиль',   path: '/profile' },
 ]
 
-function NavItem({ icon: Icon, label, badge, badgeColor, path, authOnly }: NavItemType) {
+function NavItem({ icon: Icon, label, badge, badgeColor, path, authOnly, comingSoon }: NavItemType) {
     const navigate        = useNavigate()
     const location        = useLocation()
     const { isAuthenticated } = useAuthContext()
-    const active          = !!path && location.pathname === path
+    const currentPath     = `${location.pathname}${location.search}`
+    const active          = !!path && currentPath === path
     const locked          = authOnly && !isAuthenticated
 
     return (
         <div
             onClick={() => {
+                if (comingSoon) return
                 if (locked) { navigate('/auth'); return }
                 if (path) navigate(path)
             }}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150
+                ${comingSoon ? 'cursor-default' : 'cursor-pointer'}
                 ${active
                     ? 'bg-[rgba(0,198,167,0.12)] text-[#00c6a7] border border-[rgba(0,198,167,0.2)]'
-                    : locked
+                    : locked || comingSoon
                         ? 'text-[#3d5a72] hover:bg-[#0c1e33] hover:text-[#7a9bb5]'
                         : 'text-[#7a9bb5] hover:bg-[#0c1e33] hover:text-white'
                 }`}
@@ -63,7 +67,12 @@ function NavItem({ icon: Icon, label, badge, badgeColor, path, authOnly }: NavIt
                     Войти
                 </span>
             )}
-            {badge && !locked && (
+            {comingSoon && (
+                <span className="text-[10px] text-[#3d5a72] border border-[rgba(255,255,255,0.06)] px-1.5 py-0.5 rounded">
+                    Скоро
+                </span>
+            )}
+            {badge && !locked && !comingSoon && (
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full
                     ${badgeColor === 'amber'
                         ? 'bg-amber-900/40 text-amber-400'
