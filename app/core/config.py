@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
     ENVIRONMENT: str = "development"
 
+    # https://developer.usajobs.gov/APIRequest/Index — бесплатный ключ по email
+    USAJOBS_API_KEY: str = ""
+    USAJOBS_USER_AGENT: str = ""
+
     model_config = SettingsConfigDict(
         env_file = ".env",
         extra = "ignore"

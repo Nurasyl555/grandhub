@@ -66,6 +66,11 @@ UPSTASH_REDIS_REST_URL=http://localhost
 UPSTASH_REDIS_REST_TOKEN=dummy
 
 DOMAIN=localhost:8000
+
+# Optional — only needed for the USAJOBS internship ETL.
+# Free key: https://developer.usajobs.gov/APIRequest/Index
+USAJOBS_API_KEY=
+USAJOBS_USER_AGENT=your-email@example.com
 ```
 
 > For production, replace all dummy values with real credentials.
@@ -182,3 +187,13 @@ List endpoints return pagination info in response headers:
 - `X-Total-Count` — total number of items
 - `X-Page` — current page number
 - `X-Page-Size` — current page size
+
+### ETL (data import)
+
+Manually triggered — there is no scheduler wired up yet.
+
+| Method | Endpoint                              | Source                          |
+|--------|----------------------------------------|----------------------------------|
+| POST   | `/etl/simpler-grants/run`              | simpler.grants.gov (scraping)     |
+| POST   | `/etl/intl-scholarships/run`           | internationalscholarships.com (scraping) |
+| POST   | `/etl/usajobs-internships/run`         | USAJOBS Search API (official, requires `USAJOBS_API_KEY`) |

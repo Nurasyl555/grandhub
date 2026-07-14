@@ -4,7 +4,7 @@ from datetime import date, datetime
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemes import internship
 from sqlmodel import select, desc, asc
-from sqlalchemy import func, or_, and_
+from sqlalchemy import and_, func, or_
 from app.models.internship import Internship
 
 
@@ -106,18 +106,25 @@ class InternshipService:
         if internship_data_dict.get('deadline'):
             internship_data_dict['deadline'] = internship_data_dict['deadline'].replace(tzinfo=None)
 
+        title = internship_data_dict.get('title', '').strip()
+        source_url = internship_data_dict.get('source_url', '').strip()
+
+        # Idempotency: повторный ETL-запуск не должен плодить дубли
+        dup_stmt = select(Internship).where(
+            and_(Internship.title == title, Internship.source_url == source_url)
+        )
+        dup = (await session.exec(dup_stmt)).first()
+        if dup:
+            return dup
 
         new_internship = Internship(
             **internship_data_dict
         )
 
-        # new_internship.published_at = datetime.strptime(internship_data_dict['published_at'], "%Y-%m-%d")
-        # new_internship.deadline = datetime.strptime(internship_data_dict['deadline'], "%Y-%m-%d")
-
         session.add(new_internship)
-
         await session.commit()
-        
+        await session.refresh(new_internship)
+
         return new_internship
 
     async def update_internship(self, internship_id:int, update_data:internship.InternshipUpdate ,session: AsyncSession):
