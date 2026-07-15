@@ -87,6 +87,9 @@ export default function Dashboard({ search = '' }: { search?: string }) {
 
     useEffect(() => {
         let cancelled = false
+        // Сбрасываем loading/error синхронно, чтобы спиннер появился сразу
+        // при смене token, а не через один лишний рендер.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true)
         setError(null)
         fetchAllOpportunities(token)

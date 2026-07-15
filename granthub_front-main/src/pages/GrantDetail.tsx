@@ -74,6 +74,9 @@ export default function GrantDetail() {
     useEffect(() => {
         if (!type || !id) return
         let cancelled = false
+        // Сбрасываем в "загрузка" синхронно при смене type/id, чтобы не
+        // мигал старый грант перед подгрузкой нового.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setGrant(undefined)
 
         fetchOpportunity(type, Number(id), token).then(item => {

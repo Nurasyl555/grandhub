@@ -141,6 +141,7 @@ export default function Profile() {
 
     // Загружаем реальные данные аккаунта (в т.ч. interests для ML-рекомендаций)
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!token) { setLoading(false); setVisible(true); return }
 
         fetch(`${API_BASE}/api/v1/auth/my_account`, { headers: { Authorization: `Bearer ${token}` } })

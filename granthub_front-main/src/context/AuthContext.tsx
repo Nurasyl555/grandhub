@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- co-located with the provider by convention
 export function useAuthContext() {
     const ctx = useContext(AuthContext)
     if (!ctx) throw new Error('useAuthContext must be used inside AuthProvider')

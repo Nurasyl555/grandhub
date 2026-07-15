@@ -6,7 +6,6 @@ from app.core.config import settings
 from app.db.main import init_db
 from app.auth.routes import auth_router
 from app.middlewares.middleware import register_middleware
-from demo_front.router import router as demo_front_router
 
 if settings.SENTRY_DSN:
     sentry_sdk.init(
@@ -37,4 +36,3 @@ register_middleware(app)
 
 app.include_router(base_router, prefix=f"/api/{version}")
 app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=['Auth'])
-app.include_router(demo_front_router)
