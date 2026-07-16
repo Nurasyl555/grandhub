@@ -44,8 +44,13 @@ def _to_internship_create(item: Dict[str, Any]) -> InternshipCreate:
         except (TypeError, ValueError):
             paid = None
 
+    # PositionSchedule[].Name обычно короткая метка ("Full-Time", "Part-Time"),
+    # но иногда агентство кладёт туда целый абзац — в поле duration (это тег
+    # на карточке) такое не нужно, отбрасываем всё длиннее короткой метки.
     schedules = descriptor.get("PositionSchedule") or []
-    duration = schedules[0]["Name"] if schedules and schedules[0].get("Name") else None
+    duration = schedules[0].get("Name") if schedules else None
+    if duration and len(duration) > 40:
+        duration = None
 
     return InternshipCreate(
         title=(descriptor.get("PositionTitle") or "Untitled").strip(),

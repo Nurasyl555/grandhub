@@ -61,6 +61,19 @@ def test_parses_deadline_and_published_at():
     assert result.published_at.month == 6
 
 
+def test_duration_ignored_when_schedule_name_is_a_paragraph():
+    item = {
+        "MatchedObjectDescriptor": {
+            **SAMPLE_ITEM["MatchedObjectDescriptor"],
+            "PositionSchedule": [
+                {"Name": "Hours of work can be Full-Time or Part-Time based on Participant Agreement.", "Code": "6"}
+            ],
+        }
+    }
+    result = _to_internship_create(item)
+    assert result.duration is None
+
+
 def test_falls_back_to_job_summary_when_qualification_summary_missing():
     item = {
         "MatchedObjectDescriptor": {
