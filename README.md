@@ -67,6 +67,10 @@ UPSTASH_REDIS_REST_TOKEN=dummy
 
 DOMAIN=localhost:8000
 
+# Comma-separated. In production replace with your real frontend domains.
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+ALLOWED_HOSTS=localhost,127.0.0.1
+
 # Optional — only needed for the USAJOBS internship ETL.
 # Free key: https://developer.usajobs.gov/APIRequest/Index
 USAJOBS_API_KEY=
@@ -88,6 +92,44 @@ uvicorn app:app --reload
 ```
 
 The app will be available at **http://127.0.0.1:8000**
+
+In dev the React frontend runs separately:
+
+```bash
+cd granthub_front-main
+npm install
+npm run dev          # http://localhost:5173
+```
+
+## Running with Docker
+
+Needs only a `.env` file (see step 3) — Python, Node and Redis all come from images.
+
+```bash
+docker compose up --build
+```
+
+This starts three services and applies migrations automatically:
+
+| Service          | Port | Description                                        |
+|------------------|------|----------------------------------------------------|
+| `granthub-app`   | 8000 | FastAPI + the React build served from the same port |
+| `granthub-redis` | 6379 | Celery broker / result backend                      |
+| `granthub-worker`| —    | Celery worker                                       |
+
+Everything is on **http://127.0.0.1:8000** — the React app at `/`, the API under `/api/v1`.
+Unlike dev mode there is no separate port 5173: the frontend is built inside the image
+(`Dockerfile`, stage `frontend-builder`) and served by FastAPI as static files.
+
+Logs are written to `./logs/app.log` on the host. The database lives in the named
+volume `granthub-data` — it survives restarts and does **not** touch your local `dev.db`.
+
+Notes:
+- `docker compose down -v` also wipes the database volume.
+- `/api/v1/health` reports `redis: error` in Compose. That is expected: the token
+  blocklist talks to Upstash over HTTP REST, and the Compose Redis speaks the plain
+  Redis protocol (it serves Celery only). Point `UPSTASH_REDIS_REST_URL` at a real
+  Upstash instance to make that check green.
 
 ## Running tests
 

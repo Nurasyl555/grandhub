@@ -1,0 +1,30 @@
+.git
+.github
+.idea
+.claude
+
+.venv
+
+__pycache__
+*.pyc
+
+.pytest_cache
+
+tests
+
+dev.db
+
+.gitignore
+
+README.md
+
+# Секреты не запекаем в образ — compose передаёт их через env_file
+.env
+
+# Фронтенд собирается внутри образа (stage frontend-builder).
+# Без этих исключений сюда уехал бы node_modules с хоста — сотни МБ
+# и чужие бинарники под Windows вместо Linux.
+granthub_front-main/node_modules
+granthub_front-main/dist
+
+logs

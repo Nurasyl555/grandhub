@@ -5,6 +5,7 @@ import ssl
 #from typing import Optional
 
 from celery import Celery
+from celery.signals import after_setup_logger
 #from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
@@ -12,6 +13,8 @@ from asgiref.sync import async_to_sync
 
 from app.core.config import settings
 from app.middlewares.mail import mail, create_message
+
+from app.core.logger import setup_logging
 
 # ВАЖНО: для ETL нам нужен AsyncSession напрямую, без FastAPI Depends
 #from app.db.main import AsyncSessionLocal
@@ -37,9 +40,15 @@ celery_app.conf.update(
 )
 
 # SSL для Redis — только если нужен
-if settings.CELERY_BROKER_URL.startswith("redis://") or settings.CELERY_BROKER_URL.startswith("rediss://"):
+if settings.CELERY_BROKER_URL.startswith("rediss://"):
     celery_app.conf.broker_use_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
     celery_app.conf.redis_backend_use_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
+
+@after_setup_logger.connect
+def setup_celery_logger(**kwargs):
+    setup_logging()
+    logger.info("Celery worker logging is handled by loguru")
+
 
 # EMAIL
 
