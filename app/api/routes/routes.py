@@ -6,6 +6,7 @@ from .recommendations import router as recommendations_router
 from .etl_scholarships import router as etl_scholarships_router
 from .etl_simpler_grants import router as etl_simpler_grants_router
 from .etl_internships import router as etl_internships_router
+from .etl_tasks import router as etl_tasks_router
 from .health import router as health_router
 
 router = APIRouter()
@@ -17,3 +18,4 @@ router.include_router(recommendations_router, prefix="/recommendations", tags=["
 router.include_router(etl_scholarships_router)
 router.include_router(etl_simpler_grants_router)
 router.include_router(etl_internships_router)
+router.include_router(etl_tasks_router)

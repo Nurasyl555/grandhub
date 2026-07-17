@@ -232,10 +232,47 @@ List endpoints return pagination info in response headers:
 
 ### ETL (data import)
 
-Manually triggered — there is no scheduler wired up yet.
+ETL runs as **Celery tasks**, not inside the request — crawling dozens of pages
+used to block the uvicorn worker and could take the whole server down. These
+endpoints return **202 Accepted** with a `task_id`; poll it for the result.
 
 | Method | Endpoint                              | Source                          |
 |--------|----------------------------------------|----------------------------------|
 | POST   | `/etl/simpler-grants/run`              | simpler.grants.gov (scraping)     |
 | POST   | `/etl/intl-scholarships/run`           | internationalscholarships.com (scraping) |
 | POST   | `/etl/usajobs-internships/run`         | USAJOBS Search API (official, requires `USAJOBS_API_KEY`) |
+| GET    | `/etl/tasks/{task_id}`                 | Task state: `PENDING` / `STARTED` / `RETRY` / `SUCCESS` / `FAILURE` |
+
+```bash
+# queue it
+curl -X POST "http://127.0.0.1:8000/api/v1/etl/usajobs-internships/run?keyword=student&max_pages=3"
+# -> {"task_id":"a1b2c3...","status":"queued"}
+
+# check on it
+curl "http://127.0.0.1:8000/api/v1/etl/tasks/a1b2c3..."
+# -> {"state":"SUCCESS","result":{"source":"usajobs.gov","inserted":40,...}}
+```
+
+Re-running is safe: every importer de-duplicates on `(title, source_url)`.
+
+**Requires Redis and a running worker.** With `docker compose up` both are there.
+Running `uvicorn` on its own is not enough — these endpoints answer `503` if the
+broker is unreachable. To work on ETL locally without the full stack:
+
+```bash
+docker compose up -d redis
+celery -A app.celery_tasks:celery_app worker --loglevel=info --pool=solo   # --pool=solo for Windows
+```
+
+### Scheduled jobs (Celery Beat)
+
+`app/celery_tasks.py` defines a nightly schedule: refresh grants (03:00),
+scholarships (03:30), internships (04:00), then recompute every user's ML
+recommendations (05:00), all in `Asia/Almaty`.
+
+Beat is a **separate process** and is not part of `docker compose` yet — without
+it the schedule never fires and ETL stays manual:
+
+```bash
+celery -A app.celery_tasks:celery_app beat --loglevel=info
+```
