@@ -4,8 +4,6 @@ from datetime import datetime
 from typing import List, Optional
 
 
-
-
 class UserCreateModel(BaseModel):
     first_name: str = Field(max_length=10)
     last_name: str = Field(max_length=10)
@@ -48,14 +46,12 @@ class UserUpdateModel(BaseModel):
 class UserLoginModel(BaseModel):
     email: str = Field(max_length=30)
     password: str = Field(min_length=8)
-    
 
 class EmailModel(BaseModel):
     addresses: List[str]
-
 class PasswordResetRequestModel(BaseModel):
     email: str
-        
+
 class PasswordResetConfirmModel(BaseModel):
     new_password: str
     confirm_new_password: str
