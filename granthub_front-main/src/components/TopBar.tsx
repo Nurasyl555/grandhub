@@ -1,5 +1,6 @@
-import { Search, Bell, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import NotificationsMenu from './NotificationsMenu'
 
 type Props = {
     search: string
@@ -41,10 +42,7 @@ export default function TopBar({ search, onSearch }: Props) {
                 <SlidersHorizontal size={14} />
                 Фильтры
             </button>
-            <button className="relative w-9 h-9 flex items-center justify-center border border-[rgba(255,255,255,0.08)] rounded-lg hover:bg-[#0c1e33] transition-all">
-                <Bell size={16} className="text-[#7a9bb5]" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00c6a7] rounded-full ring-2 ring-[#050e1a] shadow-[0_0_6px_#00c6a7]" />
-            </button>
+            <NotificationsMenu />
         </header>
     )
 }

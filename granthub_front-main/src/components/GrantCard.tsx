@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { Calendar, MapPin, Bookmark, ArrowUpRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { type Opportunity, daysLeft, opportunityStatus, opportunityTags, typeLabels } from '../types'
+import { useFavorites } from '../hooks/useFavorites'
 
 type Props = { grant: Opportunity }
 
@@ -27,7 +27,8 @@ function matchMeta(score: number): { bar: string; label: string } {
 
 export default function GrantCard({ grant }: Props) {
     const navigate    = useNavigate()
-    const [saved, setSaved] = useState(false)
+    const { isFavorite, toggle } = useFavorites()
+    const saved = isFavorite(grant.type, grant.id)
 
     const status   = statusConfig[opportunityStatus(grant)]
     const catColor = typeColors[grant.type] ?? 'bg-white/5 text-white/50'
@@ -79,7 +80,7 @@ export default function GrantCard({ grant }: Props) {
 
                 {/* Bookmark */}
                 <button
-                    onClick={e => { e.stopPropagation(); setSaved(s => !s) }}
+                    onClick={e => { e.stopPropagation(); toggle(grant.type, grant.id) }}
                     aria-label={saved ? 'Убрать из избранного' : 'Добавить в избранное'}
                     className={`
                         w-8 h-8 flex items-center justify-center rounded-lg border transition-all duration-150 flex-shrink-0

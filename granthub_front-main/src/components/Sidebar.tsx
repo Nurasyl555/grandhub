@@ -22,18 +22,18 @@ const navItems: NavItemType[] = [
     { icon: Sparkles,        label: 'Рекомендации',   path: '/recommendations', authOnly: true },
     { icon: GraduationCap,   label: 'Стипендии',      path: '/dashboard?type=scholarship' },
     { icon: Briefcase,       label: 'Стажировки',     path: '/dashboard?type=internship'  },
-    { icon: Star,            label: 'Избранное',      comingSoon: true },
+    { icon: Star,            label: 'Избранное',      path: '/favorites', authOnly: true },
 ]
 
 const appItems: NavItemType[] = [
-    { icon: FileText,     label: 'Активные',  comingSoon: true },
-    { icon: ChevronRight, label: 'Поданные',  comingSoon: true },
-    { icon: FileText,     label: 'Черновики', comingSoon: true },
+    { icon: FileText,     label: 'Активные',  path: '/applications/active'    },
+    { icon: ChevronRight, label: 'Поданные',  path: '/applications/submitted' },
+    { icon: FileText,     label: 'Черновики', path: '/applications/drafts'    },
 ]
 
 const bottomItems: NavItemType[] = [
-    { icon: BarChart2, label: 'Аналитика', comingSoon: true },
-    { icon: Settings,  label: 'Профиль',   path: '/profile' },
+    { icon: BarChart2, label: 'Аналитика', path: '/analytics' },
+    { icon: Settings,  label: 'Профиль',   path: '/profile'   },
 ]
 
 function NavItem({ icon: Icon, label, badge, badgeColor, path, authOnly, comingSoon }: NavItemType) {
