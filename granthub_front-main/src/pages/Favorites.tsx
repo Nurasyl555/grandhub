@@ -16,6 +16,7 @@ export default function Favorites() {
 
     useEffect(() => {
         let alive = true
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true)
         fetchAllOpportunities(token)
             .then(data => { if (alive) setAll(data) })
