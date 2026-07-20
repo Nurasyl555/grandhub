@@ -14,7 +14,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 # Импортируем модели, чтобы они зарегистрировались в SQLModel.metadata
 # ДО вызова create_all — иначе их таблицы не будут созданы.
-from app.models import grant, scholarship, internship, recommendation  # noqa: F401
+from app.models import grant, scholarship, internship, recommendation, application  # noqa: F401
 from app.auth.models import User  # noqa: F401
 
 from app import app
@@ -117,5 +117,27 @@ def regular_user() -> User:
 async def user_client(client: AsyncClient, regular_user: User) -> AsyncIterator[AsyncClient]:
     """Клиент, авторизованный как обычный (не admin) пользователь."""
     app.dependency_overrides[get_current_user] = lambda: regular_user
+    yield client
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
+def other_user() -> User:
+    """Второй пользователь — для проверки изоляции между аккаунтами."""
+    return User(
+        uid=uuid.uuid4(),
+        username="mallory",
+        email="mallory@test.com",
+        first_name="Mallory",
+        last_name="Doe",
+        role="user",
+        is_verified=True,
+        password_hash="not-used",
+    )
+
+
+@pytest_asyncio.fixture
+async def other_user_client(client: AsyncClient, other_user: User) -> AsyncIterator[AsyncClient]:
+    app.dependency_overrides[get_current_user] = lambda: other_user
     yield client
     app.dependency_overrides.pop(get_current_user, None)

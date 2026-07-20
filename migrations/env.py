@@ -10,6 +10,8 @@ from app.auth.models import User
 from app.models.grant import Grant
 from app.models.internship import Internship
 from app.models.scholarship import Scholarship
+from app.models.recommendation import Recommendation
+from app.models.application import Application
 from sqlmodel import SQLModel
 from app.core.config import settings
 
