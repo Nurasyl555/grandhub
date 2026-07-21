@@ -1,28 +1,33 @@
 services:
 
-  redis:
+  granthub-redis:
     image: redis:7-alpine
     container_name: granthub-redis
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - esg-network
 
-  app:
+  # Отдаёт и API (/api/v1/...), и собранный React (granthub_front-main/dist)
+  # с одного порта — см. app/__init__.py. Отдельный контейнер под фронт
+  # поэтому не нужен, Public Nginx проксирует прямо сюда.
+  granthub-backend:
     build: .
-    container_name: granthub-app
-    ports:
-      - "8000:8000"
+    container_name: granthub-backend
+    expose:
+      - "8000"
     env_file:
       - .env
     environment:
       # Перекрывают .env: внутри контейнера localhost — это сам контейнер,
       # а не сервис redis. Без этого Celery не находит брокер.
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://granthub-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://granthub-redis:6379/1
       # Абсолютный путь на именованный том, иначе SQLite-файл жил бы внутри
       # контейнера и терялся при каждом пересоздании.
       DATABASE_URL: sqlite+aiosqlite:////app/data/dev.db
@@ -32,7 +37,7 @@ services:
       - ./logs:/app/logs
       - granthub-data:/app/data
     depends_on:
-      redis:
+      granthub-redis:
         condition: service_healthy
     healthcheck:
       # Проверяем, что ASGI-сервер поднялся. /api/v1/health тут не годится:
@@ -42,28 +47,64 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+    networks:
+      - esg-network
 
-  celery-worker:
+  granthub-worker:
     build: .
     container_name: granthub-worker
     command: celery -A app.celery_tasks:celery_app worker --loglevel=info
     env_file:
       - .env
     environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      # Тот же том, что у app — иначе ETL-задачи писали бы в свою копию БД
+      CELERY_BROKER_URL: redis://granthub-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://granthub-redis:6379/1
+      # Тот же том, что у backend — иначе ETL-задачи писали бы в свою копию БД
       DATABASE_URL: sqlite+aiosqlite:////app/data/dev.db
-      # Миграции накатывает только app, см. docker-entrypoint.sh
+      # Миграции накатывает только backend, см. docker-entrypoint.sh
       RUN_MIGRATIONS: "0"
     volumes:
       - ./logs:/app/logs
       - granthub-data:/app/data
     depends_on:
-      redis:
+      granthub-redis:
         condition: service_healthy
-      app:
+      granthub-backend:
         condition: service_healthy
+    networks:
+      - esg-network
+
+  granthub-beat:
+    build: .
+    container_name: granthub-beat
+    command: celery -A app.celery_tasks:celery_app beat --loglevel=info
+    env_file:
+      - .env
+    environment:
+      CELERY_BROKER_URL: redis://granthub-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://granthub-redis:6379/1
+      # beat сам задачи не выполняет, только шлёт их в очередь — БД ему не
+      # нужна, но переменная должна совпадать, иначе приложение падает при
+      # импорте настроек.
+      DATABASE_URL: sqlite+aiosqlite:////app/data/dev.db
+      RUN_MIGRATIONS: "0"
+    volumes:
+      - ./logs:/app/logs
+      - granthub-data:/app/data
+    depends_on:
+      granthub-redis:
+        condition: service_healthy
+      granthub-backend:
+        condition: service_healthy
+    networks:
+      - esg-network
+
+networks:
+  # Общая сеть всех проектов esg.kbtu.kz — создаётся один раз девопсами на
+  # сервере, здесь только подключаемся. Для локального теста см.
+  # docker-compose.local.yml, который переопределяет external: false.
+  esg-network:
+    external: true
 
 volumes:
   granthub-data:

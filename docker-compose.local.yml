@@ -1,0 +1,49 @@
+# Локальный оверлей поверх docker-compose.yml — только для разработки на
+# своей машине. НЕ используется при деплое на esg.kbtu.kz (там применяется
+# один docker-compose.yml явно через `-f`, этот файл девопсы не подключают).
+#
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+#
+# Даёт то, что на проде запрещено или не нужно: открытые наружу порты и
+# отдельный dev-сервер фронта с hot-reload вместо сборки внутри backend-образа.
+
+services:
+
+  granthub-backend:
+    ports:
+      - "8000:8000"
+
+  granthub-redis:
+    ports:
+      - "6379:6379"
+
+  # Прод отдаёт собранный фронт из самого backend-контейнера (см.
+  # app/__init__.py), поэтому в docker-compose.yml отдельного сервиса нет.
+  # Локально удобнее Vite dev-сервер с hot-reload на отдельном порту.
+  granthub-frontend:
+    image: node:20-slim
+    container_name: granthub-frontend
+    working_dir: /frontend
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    environment:
+      # Локально фронт и бэк на разных портах — относительный /api не
+      # дотянется до backend, поэтому явно указываем абсолютный адрес.
+      VITE_API_BASE: http://127.0.0.1:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./granthub_front-main:/frontend
+      # Анонимный том поверх node_modules: node_modules с хоста собран под
+      # Windows и не подходит для Linux-контейнера (нативные биндинги).
+      - /frontend/node_modules
+    depends_on:
+      granthub-backend:
+        condition: service_healthy
+    networks:
+      - esg-network
+
+networks:
+  # На проде esg-network уже существует и общая для всех проектов. Локально
+  # такой сети нет — создаём её как обычную bridge-сеть для этого проекта.
+  esg-network:
+    external: false

@@ -1,6 +1,10 @@
 import type { Opportunity, OpportunityType } from '../types'
 
-export const API_BASE = 'http://127.0.0.1:8000'
+// Прод: фронт и бэк на одном origin под /granthub, поэтому относительный
+// путь из BASE_URL ("/granthub") достаточен и не хардкодит домен.
+// Локальная разработка (фронт и бэк в разных контейнерах/портах) переопределяет
+// через VITE_API_BASE, см. docker-compose.local.yml.
+export const API_BASE = import.meta.env.VITE_API_BASE ?? import.meta.env.BASE_URL.replace(/\/$/, '')
 
 async function getJson<T>(url: string, token?: string | null): Promise<T> {
     const res = await fetch(url, {
