@@ -15,7 +15,7 @@ services:
 
   granthub-redis:
     ports:
-      - "6379:6379"
+      - "16379:6379"
 
   # Прод отдаёт собранный фронт из самого backend-контейнера (см.
   # app/__init__.py), поэтому в docker-compose.yml отдельного сервиса нет.
