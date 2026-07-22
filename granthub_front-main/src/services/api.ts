@@ -18,10 +18,8 @@ function withType(type: OpportunityType) {
     return (item: Record<string, unknown>): Opportunity => ({ ...item, type }) as Opportunity
 }
 
-// Гранты требуют авторизации (RoleChecker на backend) — без токена вернём [].
 export async function fetchGrants(token?: string | null): Promise<Opportunity[]> {
-    if (!token) return []
-    const items = await getJson<Record<string, unknown>[]>(`${API_BASE}/api/v1/grants/grants/`, token)
+    const items = await getJson<Record<string, unknown>[]>(`${API_BASE}/api/v1/grants/`, token)
     return items.map(withType('grant'))
 }
 
@@ -36,7 +34,7 @@ export async function fetchInternships(): Promise<Opportunity[]> {
 }
 
 export async function fetchOpportunity(type: OpportunityType, id: number, token?: string | null): Promise<Opportunity | null> {
-    const path = type === 'grant' ? 'grants/grants' : type === 'scholarship' ? 'scholarships' : 'internships'
+    const path = type === 'grant' ? 'grants' : type === 'scholarship' ? 'scholarships' : 'internships'
     try {
         const item = await getJson<Record<string, unknown>>(`${API_BASE}/api/v1/${path}/${id}`, token)
         return withType(type)(item)
@@ -45,7 +43,6 @@ export async function fetchOpportunity(type: OpportunityType, id: number, token?
     }
 }
 
-// Гранты могут требовать авторизации — тихо пропускаем, если её нет или сервис недоступен.
 export async function fetchAllOpportunities(token?: string | null): Promise<Opportunity[]> {
     const results = await Promise.allSettled([
         fetchGrants(token),
