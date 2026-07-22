@@ -9,7 +9,7 @@ from app.services.grantService import GrantService
 from app.db.main import get_session
 from app.auth.dependencies import AccessTokenBearer, RoleChecker
 
-router = APIRouter(prefix="/grants", tags=["grants"])
+router = APIRouter(tags=["grants"])
 
 grant_service = GrantService()
 access_token_bearer = AccessTokenBearer()
@@ -18,8 +18,7 @@ role_checker = Depends(RoleChecker(['admin', 'user']))
 checker_admin = Depends(RoleChecker(['admin']))
 
 @router.get("/", response_model=List[grant.GrantRead],
-            status_code=status.HTTP_200_OK,
-            dependencies=[role_checker])
+            status_code=status.HTTP_200_OK)
 async def get_all_grants(
     session: AsyncSession = Depends(get_session),
     # Пагинация
